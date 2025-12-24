@@ -1,0 +1,25 @@
+{
+  "name": "@repo/ai",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src",
+    "format": "biome format --write src"
+  },
+  "author": "mooowu",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "ai": "^4.0.0",
+    "openai": "^4.70.0",
+    "voyageai": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  }
+}
