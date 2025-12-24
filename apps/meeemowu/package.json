@@ -1,0 +1,31 @@
+{
+  "name": "meeemowu",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/main.ts",
+    "start": "node dist/main.js",
+    "lint": "eslint src",
+    "format": "biome format --write src"
+  },
+  "author": "mooowu",
+  "license": "MIT",
+  "dependencies": {
+    "@nestjs/common": "^11.1.10",
+    "@nestjs/core": "^11.1.10",
+    "@nestjs/platform-express": "^11.1.10",
+    "effect": "^3.19.13",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.14",
+    "@nestjs/schematics": "^11.0.9",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
