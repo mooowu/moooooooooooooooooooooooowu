@@ -2,10 +2,18 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NotionWebhookController } from './controllers/notion-webhook.controller';
 import { QdrantRepository } from './repositories/qdrant.repository';
+import { NotionService } from './services/notion.service';
+import { VectorRepositoryTag } from './repositories/vector.repository';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [NotionWebhookController],
-  providers: [QdrantRepository],
+  providers: [
+    {
+      provide: VectorRepositoryTag,
+      useClass: QdrantRepository,
+    },
+    NotionService,
+  ],
 })
 export class AppModule {}

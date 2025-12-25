@@ -3,9 +3,27 @@ import { describe, it, beforeAll, afterAll } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { MicroserviceOptions } from '@nestjs/microservices';
+import { ConfigModule } from '@nestjs/config';
+import { Effect } from 'effect';
 import request from 'supertest';
-import { AppModule } from '../../app.module';
+import { NotionWebhookController } from '../notion-webhook.controller';
+import { NotionService } from '../../services/notion.service';
+import { QdrantRepository } from '../../repositories/qdrant.repository';
 import { NotionWebhookServer } from '../../transports/notion-webhook';
+
+class StubQdrantRepository {
+  createCollection = () => Effect.void;
+  upsert = () => Effect.void;
+  delete = () => Effect.void;
+  search = () => Effect.succeed([]);
+}
+
+class StubNotionService {
+  ensureCollection = () => Effect.void;
+  indexPage = () => Effect.void;
+  deletePage = () => Effect.void;
+  searchSimilar = () => Effect.succeed([]);
+}
 
 describe('NotionWebhookController (E2E)', () => {
   let app: INestApplication;
@@ -13,7 +31,12 @@ describe('NotionWebhookController (E2E)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [ConfigModule.forRoot({ isGlobal: true })],
+      controllers: [NotionWebhookController],
+      providers: [
+        { provide: QdrantRepository, useClass: StubQdrantRepository },
+        { provide: NotionService, useClass: StubNotionService },
+      ],
     }).compile();
 
     app = moduleFixture.createNestApplication();
