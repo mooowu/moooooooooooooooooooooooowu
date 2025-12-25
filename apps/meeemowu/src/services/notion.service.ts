@@ -2,6 +2,7 @@ import { LLMClient, OpenAIClient } from '@moooooooooooooooooooooooowu/ai';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Data, Effect } from 'effect';
+import { NotionDocument } from '../domain/notion-document';
 import {
   VectorDbError,
   VectorRepository,
@@ -43,24 +44,19 @@ export class NotionService {
   indexPage(
     data: NotionWebhookEventData,
   ): Effect.Effect<void, NotionServiceError | EmbeddingError | VectorDbError> {
-    const content = this.extractTextContent(data);
+    const document = NotionDocument.fromWebhookData(data);
 
-    if (!content.trim()) {
+    if (!document.hasContent()) {
       return Effect.void;
     }
 
-    return this.createEmbedding(content).pipe(
+    return this.createEmbedding(document.content).pipe(
       Effect.flatMap((embedding) =>
         this.vectorRepository.upsert(COLLECTION_NAME, [
           {
-            id: data.id,
+            id: document.id,
             vector: embedding,
-            payload: {
-              pageId: data.id,
-              parentType: data.parent?.type,
-              parentId: data.parent?.page_id ?? data.parent?.database_id,
-              content,
-            },
+            payload: document.toPayload(),
           },
         ]),
       ),
@@ -87,70 +83,6 @@ export class NotionService {
         this.vectorRepository.search(COLLECTION_NAME, embedding, limit),
       ),
     );
-  }
-
-  private extractTextContent(data: NotionWebhookEventData): string {
-    const parts: string[] = [];
-
-    if (data.properties) {
-      for (const [key, value] of Object.entries(data.properties)) {
-        const extracted = this.extractPropertyValue(value);
-        if (extracted) {
-          parts.push(`${key}: ${extracted}`);
-        }
-      }
-    }
-
-    return parts.join('\n');
-  }
-
-  private extractPropertyValue(value: unknown): string | null {
-    if (!value || typeof value !== 'object') return null;
-
-    const prop = value as Record<string, unknown>;
-
-    if (prop.type === 'title' && Array.isArray(prop.title)) {
-      return prop.title.map((t: { plain_text?: string }) => t.plain_text ?? '').join('');
-    }
-
-    if (prop.type === 'rich_text' && Array.isArray(prop.rich_text)) {
-      return prop.rich_text.map((t: { plain_text?: string }) => t.plain_text ?? '').join('');
-    }
-
-    if (prop.type === 'number' && typeof prop.number === 'number') {
-      return String(prop.number);
-    }
-
-    if (prop.type === 'select' && prop.select && typeof prop.select === 'object') {
-      return (prop.select as { name?: string }).name ?? null;
-    }
-
-    if (prop.type === 'multi_select' && Array.isArray(prop.multi_select)) {
-      return prop.multi_select.map((s: { name?: string }) => s.name ?? '').join(', ');
-    }
-
-    if (prop.type === 'date' && prop.date && typeof prop.date === 'object') {
-      const date = prop.date as { start?: string; end?: string };
-      return date.end ? `${date.start} - ${date.end}` : (date.start ?? null);
-    }
-
-    if (prop.type === 'checkbox' && typeof prop.checkbox === 'boolean') {
-      return prop.checkbox ? 'Yes' : 'No';
-    }
-
-    if (prop.type === 'url' && typeof prop.url === 'string') {
-      return prop.url;
-    }
-
-    if (prop.type === 'email' && typeof prop.email === 'string') {
-      return prop.email;
-    }
-
-    if (prop.type === 'phone_number' && typeof prop.phone_number === 'string') {
-      return prop.phone_number;
-    }
-
-    return null;
   }
 
   private createEmbedding(text: string): Effect.Effect<number[], EmbeddingError> {
