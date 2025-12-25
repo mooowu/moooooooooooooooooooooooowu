@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Optional } from '@nestjs/common';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { OpenAIClient } from '@moooooooooooooooooooooooowu/ai';
 
@@ -10,19 +10,48 @@ export interface NotionPagePayload {
   lastEditedTime?: string;
 }
 
+export interface VectorClient {
+  getCollections(): Promise<{ collections: Array<{ name: string }> }>;
+  createCollection(
+    name: string,
+    config: { vectors: { size: number; distance: string } },
+  ): Promise<unknown>;
+  upsert(
+    collection: string,
+    data: { points: Array<{ id: string; vector: number[]; payload: Record<string, unknown> }> },
+  ): Promise<unknown>;
+  delete(collection: string, data: { points: string[] }): Promise<unknown>;
+  search(
+    collection: string,
+    params: { vector: number[]; limit: number; with_payload: boolean },
+  ): Promise<Array<{ id: string | number; score: number; payload?: Record<string, unknown> }>>;
+}
+
+export interface EmbeddingClient {
+  embed(texts: string[]): Promise<Array<{ embedding: number[] }>>;
+}
+
+export const VECTOR_CLIENT = Symbol('VECTOR_CLIENT');
+export const EMBEDDING_CLIENT = Symbol('EMBEDDING_CLIENT');
+
 @Injectable()
 export class QdrantService implements OnModuleInit {
-  private client: QdrantClient;
-  private openai: OpenAIClient;
   private readonly collectionName = 'notion_pages';
   private readonly vectorSize = 1536;
 
-  constructor() {
-    this.client = new QdrantClient({
-      url: process.env.QDRANT_URL ?? 'http://localhost:6333',
-      apiKey: process.env.QDRANT_API_KEY,
-    });
-    this.openai = new OpenAIClient();
+  constructor(
+    @Optional() @Inject(VECTOR_CLIENT) private readonly vectorClient?: VectorClient,
+    @Optional() @Inject(EMBEDDING_CLIENT) private readonly embeddingClient?: EmbeddingClient,
+  ) {
+    if (!this.vectorClient) {
+      this.vectorClient = new QdrantClient({
+        url: process.env.QDRANT_URL ?? 'http://localhost:6333',
+        apiKey: process.env.QDRANT_API_KEY,
+      }) as unknown as VectorClient;
+    }
+    if (!this.embeddingClient) {
+      this.embeddingClient = new OpenAIClient();
+    }
   }
 
   async onModuleInit() {
@@ -31,14 +60,14 @@ export class QdrantService implements OnModuleInit {
 
   async upsertPage(page: NotionPagePayload): Promise<void> {
     const textToEmbed = `${page.title}\n\n${page.content}`;
-    const embeddings = await this.openai.embed([textToEmbed]);
+    const embeddings = await this.embeddingClient!.embed([textToEmbed]);
     const vector = embeddings[0]?.embedding;
 
     if (!vector) {
       throw new Error('Failed to generate embedding');
     }
 
-    await this.client.upsert(this.collectionName, {
+    await this.vectorClient!.upsert(this.collectionName, {
       points: [
         {
           id: page.id,
@@ -55,20 +84,20 @@ export class QdrantService implements OnModuleInit {
   }
 
   async deletePage(pageId: string): Promise<void> {
-    await this.client.delete(this.collectionName, {
+    await this.vectorClient!.delete(this.collectionName, {
       points: [pageId],
     });
   }
 
   async search(query: string, limit = 5): Promise<NotionPagePayload[]> {
-    const embeddings = await this.openai.embed([query]);
+    const embeddings = await this.embeddingClient!.embed([query]);
     const vector = embeddings[0]?.embedding;
 
     if (!vector) {
       throw new Error('Failed to generate embedding');
     }
 
-    const results = await this.client.search(this.collectionName, {
+    const results = await this.vectorClient!.search(this.collectionName, {
       vector,
       limit,
       with_payload: true,
@@ -84,11 +113,11 @@ export class QdrantService implements OnModuleInit {
   }
 
   private async ensureCollection(): Promise<void> {
-    const collections = await this.client.getCollections();
+    const collections = await this.vectorClient!.getCollections();
     const exists = collections.collections.some((c) => c.name === this.collectionName);
 
     if (!exists) {
-      await this.client.createCollection(this.collectionName, {
+      await this.vectorClient!.createCollection(this.collectionName, {
         vectors: {
           size: this.vectorSize,
           distance: 'Cosine',

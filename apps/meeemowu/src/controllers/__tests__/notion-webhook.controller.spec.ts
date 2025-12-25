@@ -1,28 +1,36 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { NotionWebhookController } from '../notion-webhook.controller';
-import { QdrantService } from '../../services/qdrant.service';
+import { QdrantService, NotionPagePayload } from '../../services/qdrant.service';
 import { NotionWebhookEventData } from '../../transports/notion-webhook';
 
-describe('NotionWebhookController', () => {
-  let controller: NotionWebhookController;
-  let mockQdrantService: {
-    upsertPage: ReturnType<typeof vi.fn>;
-    deletePage: ReturnType<typeof vi.fn>;
-    search: ReturnType<typeof vi.fn>;
+interface QdrantServiceStub {
+  upsertPage: (page: NotionPagePayload) => Promise<void>;
+  deletePage: (pageId: string) => Promise<void>;
+  search: (query: string, limit?: number) => Promise<NotionPagePayload[]>;
+}
+
+function createQdrantServiceStub(overrides: Partial<QdrantServiceStub> = {}): QdrantServiceStub {
+  return {
+    upsertPage: async () => {},
+    deletePage: async () => {},
+    search: async () => [],
+    ...overrides,
   };
+}
 
-  beforeEach(() => {
-    mockQdrantService = {
-      upsertPage: vi.fn().mockResolvedValue(undefined),
-      deletePage: vi.fn().mockResolvedValue(undefined),
-      search: vi.fn().mockResolvedValue([]),
-    };
-
-    controller = new NotionWebhookController(mockQdrantService as unknown as QdrantService);
-  });
-
+describe('NotionWebhookController', () => {
   describe('handlePageCreated', () => {
     it('should index new page to Qdrant', async () => {
+      let upsertedPage: NotionPagePayload | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        upsertPage: async (page) => {
+          upsertedPage = page;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-123',
         properties: {
@@ -35,7 +43,7 @@ describe('NotionWebhookController', () => {
       const result = await controller.handlePageCreated(eventData);
 
       expect(result).toEqual({ success: true });
-      expect(mockQdrantService.upsertPage).toHaveBeenCalledWith({
+      expect(upsertedPage).toEqual({
         id: 'page-123',
         title: 'Test Page',
         content: 'This is test content',
@@ -45,6 +53,16 @@ describe('NotionWebhookController', () => {
     });
 
     it('should handle Name property for title', async () => {
+      let upsertedPage: NotionPagePayload | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        upsertPage: async (page) => {
+          upsertedPage = page;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-456',
         properties: {
@@ -55,14 +73,20 @@ describe('NotionWebhookController', () => {
 
       await controller.handlePageCreated(eventData);
 
-      expect(mockQdrantService.upsertPage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: 'Named Page',
-        }),
-      );
+      expect(upsertedPage?.title).toBe('Named Page');
     });
 
     it('should default to Untitled when no title found', async () => {
+      let upsertedPage: NotionPagePayload | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        upsertPage: async (page) => {
+          upsertedPage = page;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-789',
         properties: {},
@@ -71,16 +95,22 @@ describe('NotionWebhookController', () => {
 
       await controller.handlePageCreated(eventData);
 
-      expect(mockQdrantService.upsertPage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: 'Untitled',
-        }),
-      );
+      expect(upsertedPage?.title).toBe('Untitled');
     });
   });
 
   describe('handlePageUpdated', () => {
     it('should update page in Qdrant', async () => {
+      let upsertedPage: NotionPagePayload | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        upsertPage: async (page) => {
+          upsertedPage = page;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-123',
         properties: {
@@ -93,7 +123,7 @@ describe('NotionWebhookController', () => {
       const result = await controller.handlePageUpdated(eventData);
 
       expect(result).toEqual({ success: true });
-      expect(mockQdrantService.upsertPage).toHaveBeenCalledWith({
+      expect(upsertedPage).toEqual({
         id: 'page-123',
         title: 'Updated Page',
         content: 'Updated content',
@@ -105,6 +135,16 @@ describe('NotionWebhookController', () => {
 
   describe('handlePageDeleted', () => {
     it('should remove page from Qdrant', async () => {
+      let deletedPageId: string | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        deletePage: async (pageId) => {
+          deletedPageId = pageId;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-123',
         properties: {},
@@ -113,12 +153,22 @@ describe('NotionWebhookController', () => {
       const result = await controller.handlePageDeleted(eventData);
 
       expect(result).toEqual({ success: true });
-      expect(mockQdrantService.deletePage).toHaveBeenCalledWith('page-123');
+      expect(deletedPageId).toBe('page-123');
     });
   });
 
   describe('content extraction', () => {
     it('should handle string content', async () => {
+      let upsertedPage: NotionPagePayload | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        upsertPage: async (page) => {
+          upsertedPage = page;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-1',
         properties: { title: [{ plain_text: 'Test' }] },
@@ -127,14 +177,20 @@ describe('NotionWebhookController', () => {
 
       await controller.handlePageCreated(eventData);
 
-      expect(mockQdrantService.upsertPage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: 'Simple string content',
-        }),
-      );
+      expect(upsertedPage?.content).toBe('Simple string content');
     });
 
     it('should handle array content with plain_text', async () => {
+      let upsertedPage: NotionPagePayload | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        upsertPage: async (page) => {
+          upsertedPage = page;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-2',
         properties: { title: [{ plain_text: 'Test' }] },
@@ -143,14 +199,20 @@ describe('NotionWebhookController', () => {
 
       await controller.handlePageCreated(eventData);
 
-      expect(mockQdrantService.upsertPage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: 'First block\nSecond block',
-        }),
-      );
+      expect(upsertedPage?.content).toBe('First block\nSecond block');
     });
 
     it('should handle array content with text property', async () => {
+      let upsertedPage: NotionPagePayload | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        upsertPage: async (page) => {
+          upsertedPage = page;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-3',
         properties: { title: [{ plain_text: 'Test' }] },
@@ -159,14 +221,20 @@ describe('NotionWebhookController', () => {
 
       await controller.handlePageCreated(eventData);
 
-      expect(mockQdrantService.upsertPage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: 'Text block 1\nText block 2',
-        }),
-      );
+      expect(upsertedPage?.content).toBe('Text block 1\nText block 2');
     });
 
     it('should handle undefined content', async () => {
+      let upsertedPage: NotionPagePayload | undefined;
+
+      const qdrantService = createQdrantServiceStub({
+        upsertPage: async (page) => {
+          upsertedPage = page;
+        },
+      });
+
+      const controller = new NotionWebhookController(qdrantService as unknown as QdrantService);
+
       const eventData: NotionWebhookEventData = {
         id: 'page-4',
         properties: { title: [{ plain_text: 'Test' }] },
@@ -174,11 +242,7 @@ describe('NotionWebhookController', () => {
 
       await controller.handlePageCreated(eventData);
 
-      expect(mockQdrantService.upsertPage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: '',
-        }),
-      );
+      expect(upsertedPage?.content).toBe('');
     });
   });
 });
