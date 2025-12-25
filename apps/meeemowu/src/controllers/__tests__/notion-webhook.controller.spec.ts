@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+import { describe, it, beforeAll, afterAll } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { MicroserviceOptions } from '@nestjs/microservices';
@@ -16,7 +18,6 @@ describe('NotionWebhookController (E2E)', () => {
 
     app = moduleFixture.createNestApplication();
 
-    // Use port 0 for random available port to avoid conflicts
     const strategy = new NotionWebhookServer({
       port: 0,
       path: '/notion/webhook',

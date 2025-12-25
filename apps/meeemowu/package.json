@@ -16,6 +16,7 @@
   "dependencies": {
     "@moooooooooooooooooooooooowu/ai": "workspace:*",
     "@nestjs/common": "^11.1.10",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.10",
     "@nestjs/microservices": "^11.1.10",
     "@nestjs/platform-express": "^11.1.10",
@@ -34,6 +35,7 @@
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
+    "unplugin-swc": "^1.5.9",
     "vitest": "^4.0.16"
   }
 }
