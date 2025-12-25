@@ -1,8 +1,8 @@
 import { Controller, Logger } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
 import { Effect } from 'effect';
+
 import { NotionService } from '../services/notion.service';
-import { NotionWebhookEventData } from '../transports/notion-webhook';
+import { NotionEvent, NotionEventType, NotionWebhookEventData } from '../transports/notion-webhook';
 
 @Controller()
 export class NotionWebhookController {
@@ -10,7 +10,7 @@ export class NotionWebhookController {
 
   constructor(private readonly notionService: NotionService) {}
 
-  @MessagePattern('page.created')
+  @NotionEvent(NotionEventType.PageCreated)
   async handlePageCreated(data: NotionWebhookEventData): Promise<{ success: boolean }> {
     const program = this.notionService.ensureCollection().pipe(
       Effect.flatMap(() => this.notionService.indexPage(data)),
@@ -26,7 +26,7 @@ export class NotionWebhookController {
     return Effect.runPromise(program);
   }
 
-  @MessagePattern('page.updated')
+  @NotionEvent(NotionEventType.PageUpdated)
   async handlePageUpdated(data: NotionWebhookEventData): Promise<{ success: boolean }> {
     const program = this.notionService.indexPage(data).pipe(
       Effect.match({
@@ -41,7 +41,7 @@ export class NotionWebhookController {
     return Effect.runPromise(program);
   }
 
-  @MessagePattern('page.deleted')
+  @NotionEvent(NotionEventType.PageDeleted)
   async handlePageDeleted(data: NotionWebhookEventData): Promise<{ success: boolean }> {
     const program = this.notionService.deletePage(data.id).pipe(
       Effect.match({

@@ -1,5 +1,7 @@
 import { CustomTransportStrategy, Server } from '@nestjs/microservices';
 import { createServer, Server as HttpServer, IncomingMessage, ServerResponse } from 'http';
+
+import { NOTION_EVENT_PREFIX } from './notion-event.decorator';
 import type {
   NotionVerificationRequest,
   NotionWebhookEvent,
@@ -80,7 +82,7 @@ export class NotionWebhookServer extends Server implements CustomTransportStrate
         return;
       }
 
-      const pattern = event.type;
+      const pattern = `${NOTION_EVENT_PREFIX}${event.type}`;
       const handler = this.getHandlerByPattern(pattern);
 
       if (!handler) {
