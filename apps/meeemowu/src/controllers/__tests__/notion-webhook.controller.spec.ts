@@ -1,15 +1,15 @@
 import 'reflect-metadata';
-import { describe, it, beforeAll, afterAll } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { MicroserviceOptions } from '@nestjs/microservices';
 import { ConfigModule } from '@nestjs/config';
+import { MicroserviceOptions } from '@nestjs/microservices';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Effect } from 'effect';
 import request from 'supertest';
-import { NotionWebhookController } from '../notion-webhook.controller';
-import { NotionService } from '../../services/notion.service';
+import { afterAll, beforeAll, describe, it } from 'vitest';
 import { QdrantRepository } from '../../repositories/qdrant.repository';
+import { NotionService } from '../../services/notion.service';
 import { NotionWebhookServer } from '../../transports/notion-webhook';
+import { NotionWebhookController } from '../notion-webhook.controller';
 
 class StubQdrantRepository {
   createCollection = () => Effect.void;

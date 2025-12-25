@@ -31,7 +31,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "biome format --write"
+      "biome check --write",
+      "eslint"
     ]
   }
 }

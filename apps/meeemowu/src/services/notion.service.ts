@@ -1,6 +1,6 @@
+import { LLMClient, OpenAIClient } from '@moooooooooooooooooooooooowu/ai';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LLMClient, OpenAIClient } from '@moooooooooooooooooooooooowu/ai';
 import { Data, Effect } from 'effect';
 import {
   VectorDbError,
