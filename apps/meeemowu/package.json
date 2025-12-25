@@ -14,12 +14,12 @@
   "author": "mooowu",
   "license": "MIT",
   "dependencies": {
+    "@moooooooooooooooooooooooowu/ai": "workspace:*",
     "@nestjs/common": "^11.1.10",
     "@nestjs/core": "^11.1.10",
     "@nestjs/microservices": "^11.1.10",
     "@nestjs/platform-express": "^11.1.10",
     "@qdrant/js-client-rest": "^1.16.2",
-    "@moooooooooooooooooooooooowu/ai": "workspace:*",
     "effect": "^3.19.13",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
@@ -27,8 +27,11 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.14",
     "@nestjs/schematics": "^11.0.9",
+    "@nestjs/testing": "^11.1.10",
     "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
