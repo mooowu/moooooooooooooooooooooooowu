@@ -1,9 +1,8 @@
-import { Context, Data, Effect } from 'effect';
+import { Context, Effect } from 'effect';
 
-export class VectorDbError extends Data.TaggedError('VectorDbError')<{
-  message: string;
-  cause?: unknown;
-}> {}
+import { VectorDbError } from './errors';
+
+export { VectorDbError };
 
 export interface VectorRepository {
   readonly createCollection: (

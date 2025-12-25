@@ -1,7 +1,8 @@
 import { LLMClient, OpenAIClient } from '@moooooooooooooooooooooooowu/ai';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Data, Effect } from 'effect';
+import { Effect } from 'effect';
+
 import { NotionDocument } from '../domain/notion-document';
 import {
   VectorDbError,
@@ -9,16 +10,9 @@ import {
   VectorRepositoryTag,
 } from '../repositories/vector.repository';
 import { NotionWebhookEventData } from '../transports/notion-webhook';
+import { EmbeddingError, NotionServiceError } from './errors';
 
-export class NotionServiceError extends Data.TaggedError('NotionServiceError')<{
-  message: string;
-  cause?: unknown;
-}> {}
-
-export class EmbeddingError extends Data.TaggedError('EmbeddingError')<{
-  message: string;
-  cause?: unknown;
-}> {}
+export { EmbeddingError, NotionServiceError };
 
 const COLLECTION_NAME = 'notion_pages';
 const VECTOR_SIZE = 1536;
