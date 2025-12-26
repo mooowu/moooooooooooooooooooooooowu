@@ -12,10 +12,10 @@ import type {
 export class AnthropicClient implements LLMClient {
   private client: Anthropic;
   private voyageClient: VoyageAIClient;
-  private defaultModel: string;
+  private defaultChatModel: string;
+  private defaultEmbeddingModel: string;
   private defaultTemperature: number;
   private defaultMaxTokens: number;
-  private defaultEmbeddingModel: string;
 
   constructor(config: AnthropicClientConfig = {}) {
     this.client = new Anthropic({
@@ -24,14 +24,14 @@ export class AnthropicClient implements LLMClient {
     this.voyageClient = new VoyageAIClient({
       apiKey: config.voyageApiKey ?? process.env.VOYAGE_API_KEY,
     });
-    this.defaultModel = config.defaultModel ?? 'claude-sonnet-4-20250514';
+    this.defaultChatModel = config.defaultModel ?? 'claude-sonnet-4-20250514';
+    this.defaultEmbeddingModel = config.defaultEmbeddingModel ?? 'voyage-3';
     this.defaultTemperature = config.defaultTemperature ?? 0.7;
     this.defaultMaxTokens = config.defaultMaxTokens ?? 1024;
-    this.defaultEmbeddingModel = config.defaultEmbeddingModel ?? 'voyage-3';
   }
 
   async chat(messages: Message[], options: ChatCompletionOptions = {}): Promise<string> {
-    const model = options.model ?? this.defaultModel;
+    const model = options.model ?? this.defaultChatModel;
     const temperature = options.temperature ?? this.defaultTemperature;
     const maxTokens = options.maxTokens ?? this.defaultMaxTokens;
 

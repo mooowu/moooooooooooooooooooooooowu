@@ -10,7 +10,8 @@ import type {
 
 export class OpenAIClient implements LLMClient {
   private client: OpenAI;
-  private defaultModel: string;
+  private defaultChatModel: string;
+  private defaultEmbeddingModel: string;
   private defaultTemperature: number;
   private defaultMaxTokens: number;
 
@@ -18,13 +19,14 @@ export class OpenAIClient implements LLMClient {
     this.client = new OpenAI({
       apiKey: config.apiKey ?? process.env.OPENAI_API_KEY,
     });
-    this.defaultModel = config.defaultModel ?? 'gpt-4o-mini';
+    this.defaultChatModel = config.defaultModel ?? 'gpt-4o-mini';
+    this.defaultEmbeddingModel = config.defaultEmbeddingModel ?? 'text-embedding-3-small';
     this.defaultTemperature = config.defaultTemperature ?? 0.7;
     this.defaultMaxTokens = config.defaultMaxTokens ?? 1024;
   }
 
   async chat(messages: Message[], options: ChatCompletionOptions = {}): Promise<string> {
-    const model = options.model ?? this.defaultModel;
+    const model = options.model ?? this.defaultChatModel;
     const temperature = options.temperature ?? this.defaultTemperature;
     const maxTokens = options.maxTokens ?? this.defaultMaxTokens;
 
@@ -39,7 +41,7 @@ export class OpenAIClient implements LLMClient {
   }
 
   async embed(texts: string[], options: EmbeddingOptions = {}): Promise<EmbeddingResult[]> {
-    const model = options.model ?? 'text-embedding-3-small';
+    const model = options.model ?? this.defaultEmbeddingModel;
 
     const response = await this.client.embeddings.create({
       model,

@@ -10,7 +10,8 @@ import type {
 
 export class OpenRouterClient implements LLMClient {
   private client: OpenAI;
-  private defaultModel: string;
+  private defaultChatModel: string;
+  private defaultEmbeddingModel: string;
   private defaultTemperature: number;
   private defaultMaxTokens: number;
 
@@ -23,13 +24,14 @@ export class OpenRouterClient implements LLMClient {
         'X-Title': config.siteName ?? process.env.OPENROUTER_SITE_NAME,
       },
     });
-    this.defaultModel = config.defaultModel ?? 'openai/gpt-4o-mini';
+    this.defaultChatModel = config.defaultModel ?? 'openai/gpt-4o-mini';
+    this.defaultEmbeddingModel = config.defaultEmbeddingModel ?? 'openai/text-embedding-3-small';
     this.defaultTemperature = config.defaultTemperature ?? 0.7;
     this.defaultMaxTokens = config.defaultMaxTokens ?? 1024;
   }
 
   async chat(messages: Message[], options: ChatCompletionOptions = {}): Promise<string> {
-    const model = options.model ?? this.defaultModel;
+    const model = options.model ?? this.defaultChatModel;
     const temperature = options.temperature ?? this.defaultTemperature;
     const maxTokens = options.maxTokens ?? this.defaultMaxTokens;
 
@@ -44,7 +46,7 @@ export class OpenRouterClient implements LLMClient {
   }
 
   async embed(texts: string[], options: EmbeddingOptions = {}): Promise<EmbeddingResult[]> {
-    const model = options.model ?? 'openai/text-embedding-3-small';
+    const model = options.model ?? this.defaultEmbeddingModel;
 
     const response = await this.client.embeddings.create({
       model,
