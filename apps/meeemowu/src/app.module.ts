@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NotionWebhookController } from './controllers/notion-webhook.controller';
-import { QdrantRepository } from './repositories/qdrant.repository';
+import { PgVectorRepository } from './repositories/pgvector.repository';
 import { VectorRepositoryTag } from './repositories/vector.repository';
 import { NotionService } from './services/notion.service';
 
@@ -11,7 +11,7 @@ import { NotionService } from './services/notion.service';
   providers: [
     {
       provide: VectorRepositoryTag,
-      useClass: QdrantRepository,
+      useClass: PgVectorRepository,
     },
     NotionService,
   ],

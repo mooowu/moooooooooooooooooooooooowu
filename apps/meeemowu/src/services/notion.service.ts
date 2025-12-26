@@ -1,4 +1,4 @@
-import { LLMClient, OpenAIClient } from '@moooooooooooooooooooooooowu/ai';
+import { LLMClient, OpenRouterClient } from '@moooooooooooooooooooooooowu/ai';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Effect } from 'effect';
@@ -26,8 +26,8 @@ export class NotionService {
     @Inject(VectorRepositoryTag)
     private readonly vectorRepository: VectorRepository,
   ) {
-    this.llmClient = new OpenAIClient({
-      apiKey: this.configService.get<string>('OPENAI_API_KEY'),
+    this.llmClient = new OpenRouterClient({
+      apiKey: this.configService.get<string>('OPENROUTER_API_KEY'),
     });
   }
 
