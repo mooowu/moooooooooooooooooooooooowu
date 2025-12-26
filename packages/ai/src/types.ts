@@ -21,13 +21,13 @@ export interface EmbeddingResult {
 export interface LLMClientConfig {
   apiKey?: string;
   defaultModel?: string;
+  defaultEmbeddingModel?: string;
   defaultTemperature?: number;
   defaultMaxTokens?: number;
 }
 
 export interface AnthropicClientConfig extends LLMClientConfig {
   voyageApiKey?: string;
-  defaultEmbeddingModel?: string;
 }
 
 export interface OpenRouterClientConfig extends LLMClientConfig {
