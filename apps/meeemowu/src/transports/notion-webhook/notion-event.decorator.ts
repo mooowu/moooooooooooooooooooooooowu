@@ -3,6 +3,7 @@ import { MessagePattern } from '@nestjs/microservices';
 export enum NotionEventType {
   PageCreated = 'page.created',
   PageUpdated = 'page.updated',
+  PageContentUpdated = 'page.content_updated',
   PageDeleted = 'page.deleted',
   PageRestored = 'page.restored',
   DatabaseCreated = 'database.created',
