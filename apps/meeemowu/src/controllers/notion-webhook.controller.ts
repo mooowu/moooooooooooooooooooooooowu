@@ -41,6 +41,21 @@ export class NotionWebhookController {
     return Effect.runPromise(program);
   }
 
+  @NotionEvent(NotionEventType.PageContentUpdated)
+  async handlePageContentUpdated(data: NotionWebhookEventData): Promise<{ success: boolean }> {
+    const program = this.notionService.indexPage(data).pipe(
+      Effect.match({
+        onSuccess: () => ({ success: true }),
+        onFailure: (error) => {
+          this.logger.error('Failed to index content updated page', error);
+          return { success: false };
+        },
+      }),
+    );
+
+    return Effect.runPromise(program);
+  }
+
   @NotionEvent(NotionEventType.PageDeleted)
   async handlePageDeleted(data: NotionWebhookEventData): Promise<{ success: boolean }> {
     const program = this.notionService.deletePage(data.id).pipe(
