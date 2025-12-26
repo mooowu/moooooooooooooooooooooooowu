@@ -30,6 +30,11 @@ export interface AnthropicClientConfig extends LLMClientConfig {
   defaultEmbeddingModel?: string;
 }
 
+export interface OpenRouterClientConfig extends LLMClientConfig {
+  siteUrl?: string;
+  siteName?: string;
+}
+
 export interface LLMClient {
   chat(messages: Message[], options?: ChatCompletionOptions): Promise<string>;
   embed(texts: string[], options?: EmbeddingOptions): Promise<EmbeddingResult[]>;
