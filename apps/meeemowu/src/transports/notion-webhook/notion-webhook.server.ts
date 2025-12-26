@@ -12,13 +12,11 @@ export class NotionWebhookServer extends Server implements CustomTransportStrate
   private httpServer: HttpServer | null = null;
   private readonly port: number;
   private readonly path: string;
-  private readonly verificationToken?: string;
 
   constructor(options: NotionWebhookOptions = {}) {
     super();
     this.port = options.port ?? 3001;
     this.path = options.path ?? '/notion/webhook';
-    this.verificationToken = options.verificationToken;
   }
 
   listen(callback: () => void): void {
@@ -76,10 +74,8 @@ export class NotionWebhookServer extends Server implements CustomTransportStrate
 
       const event = payload as NotionWebhookEvent;
 
-      if (this.verificationToken && event.verification_token !== this.verificationToken) {
-        res.writeHead(401);
-        res.end('Unauthorized');
-        return;
+      if (event.verification_token) {
+        this.logger.log(`Received verification_token: ${event.verification_token}`);
       }
 
       const pattern = `${NOTION_EVENT_PREFIX}${event.type}`;
@@ -119,20 +115,16 @@ export class NotionWebhookServer extends Server implements CustomTransportStrate
     return (
       typeof payload === 'object' &&
       payload !== null &&
-      'challenge' in payload &&
-      'verification_token' in payload
+      'verification_token' in payload &&
+      !('type' in payload)
     );
   }
 
   private handleVerification(payload: NotionVerificationRequest, res: ServerResponse): void {
-    if (this.verificationToken && payload.verification_token !== this.verificationToken) {
-      res.writeHead(401);
-      res.end('Unauthorized');
-      return;
-    }
+    this.logger.log(`Received verification_token: ${payload.verification_token}`);
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ challenge: payload.challenge }));
-    this.logger.log('Notion webhook verification successful');
+    const response = payload.challenge ? { challenge: payload.challenge } : { ok: true };
+    res.end(JSON.stringify(response));
   }
 }
